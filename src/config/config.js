@@ -3,7 +3,7 @@
  */
 require("dotenv").config();
 
-module.exports = {
+const config = {
   // Servidor WebSocket
   server: {
     port: process.env.WS_PORT || 8080,
@@ -32,3 +32,5 @@ module.exports = {
     level: process.env.LOG_LEVEL || "info",
   },
 };
+
+module.exports = config;
