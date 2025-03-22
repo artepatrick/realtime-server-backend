@@ -54,7 +54,7 @@ class WebSocketServer {
           client.ws.ping(JSON.stringify({ type: "ping" }));
 
           // Verificar se o cliente respondeu ao último ping
-          if (client.lastPong && Date.now() - client.lastPong > 60000) {
+          if (client?.lastPong && Date.now() - client?.lastPong > 60000) {
             // 60 segundos
             logger.warn(`Cliente não respondeu ao ping, fechando conexão`, {
               clientId,
@@ -95,6 +95,7 @@ class WebSocketServer {
 
       // Configurar handlers para o cliente
       ws.on("message", (data, isBinary) => {
+        logger.info(`CHegou alguma coisa! ${data}`);
         const message = isBinary ? data : data.toString();
         this.handleClientMessage(clientId, message);
       });
