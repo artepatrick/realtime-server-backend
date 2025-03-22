@@ -94,7 +94,11 @@ class WebSocketServer {
       await sessionManager.createSession(clientId, ws);
 
       // Configurar handlers para o cliente
-      ws.on("message", (data) => this.handleClientMessage(clientId, data));
+      ws.on("message", (data, isBinary) => {
+        const message = isBinary ? data : data.toString();
+        this.handleClientMessage(clientId, message);
+      });
+
       ws.on("close", () => this.handleClientDisconnect(clientId));
       ws.on("error", (error) => this.handleClientError(clientId, error));
       ws.on("pong", () => (this.clients.get(clientId).lastPong = Date.now()));
@@ -136,6 +140,8 @@ class WebSocketServer {
    */
   handleClientMessage(clientId, data) {
     try {
+      logger.debug("Mensagem recebida", { clientId, data, type: typeof data });
+
       const message = JSON.parse(data.toString());
       handleClientMessage(clientId, message);
     } catch (error) {
