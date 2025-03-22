@@ -1,0 +1,30 @@
+{
+    "name": "openai-realtime-server",
+    "version": "1.0.0",
+    "description": "Servidor ponte para a API OpenAI Realtime",
+    "main": "src/app.js",
+    "scripts": {
+      "start": "node src/app.js",
+      "dev": "nodemon src/app.js",
+      "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [
+      "openai",
+      "realtime",
+      "websocket",
+      "audio",
+      "streaming"
+    ],
+    "author": "",
+    "license": "MIT",
+    "dependencies": {
+      "dotenv": "^16.3.1",
+      "express": "^4.18.2",
+      "uuid": "^9.0.1",
+      "winston": "^3.11.0",
+      "ws": "^8.14.2"
+    },
+    "devDependencies": {
+      "nodemon": "^3.0.1"
+    }
+  }
