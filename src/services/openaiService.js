@@ -15,6 +15,36 @@ class OpenAIService {
     this.pendingResponses = new Map(); // Armazena callbacks para eventos esperados
   }
 
+  async sendEvent(connectionId, event) {
+    const connection = this.connections.get(connectionId);
+    if (!connection) {
+      throw new Error(`Conexão não encontrada: ${connectionId}`);
+    }
+
+    try {
+      // Adicionar ID ao evento se não existir
+      if (!event.event_id) {
+        event.event_id = `evt_${Date.now()}_${uuidv4().slice(0, 8)}`;
+      }
+
+      // Enviar evento como string JSON
+      connection.ws.send(JSON.stringify(event));
+      logger.debug(`Evento enviado para OpenAI`, {
+        connectionId,
+        eventType: event.type,
+        eventId: event.event_id,
+      });
+
+      return event.event_id;
+    } catch (error) {
+      logger.error(`Erro ao enviar evento para OpenAI: ${error.message}`, {
+        connectionId,
+        error,
+      });
+      throw error;
+    }
+  }
+
   /**
    * Cria uma nova conexão com a API OpenAI Realtime
    * @param {string} clientId - ID do cliente que solicitou a conexão
@@ -105,6 +135,48 @@ class OpenAIService {
       connection.ws.on("message", (data) => {
         try {
           const message = JSON.parse(data.toString());
+
+          // Log detalhado da mensagem recebida
+          logger.info(`RECEBIDO DA OPENAI: ${message.type}`, {
+            connectionId,
+          });
+
+          // Tratamento especial para diferentes tipos de mensagens
+          if (message.type === "response.text.delta") {
+            logger.info(`Delta de texto recebido: "${message.delta}"`, {
+              connectionId,
+            });
+          } else if (message.type === "response.audio.delta") {
+            logger.info(
+              `Delta de áudio recebido: ${
+                message.delta ? "dados presentes" : "sem dados"
+              }`,
+              {
+                connectionId,
+              }
+            );
+          } else if (message.type === "error") {
+            logger.error(
+              `Erro recebido da OpenAI: ${JSON.stringify(message.error)}`,
+              {
+                connectionId,
+              }
+            );
+          } else {
+            // Para outros tipos de mensagem, logar o conteúdo completo
+            const messageStr = JSON.stringify(message);
+            // Limitar o tamanho do log para evitar poluir os logs
+            const truncatedStr =
+              messageStr.length > 1000
+                ? messageStr.substring(0, 1000) + "..."
+                : messageStr;
+
+            logger.info(`Mensagem completa da OpenAI: ${truncatedStr}`, {
+              connectionId,
+            });
+          }
+
+          // Chamar o handler original
           messageHandler(message);
         } catch (error) {
           logger.error(
@@ -113,42 +185,14 @@ class OpenAIService {
           );
         }
       });
-    }
-  }
 
-  /**
-   * Envia um evento para a API OpenAI
-   * @param {string} connectionId - ID da conexão
-   * @param {Object} event - Evento a ser enviado
-   * @returns {Promise<string>} - ID do evento enviado
-   */
-  async sendEvent(connectionId, event) {
-    const connection = this.connections.get(connectionId);
-    if (!connection) {
-      throw new Error(`Conexão não encontrada: ${connectionId}`);
-    }
-
-    try {
-      // Adicionar ID ao evento se não existir
-      if (!event.event_id) {
-        event.event_id = `evt_${Date.now()}_${uuidv4().slice(0, 8)}`;
-      }
-
-      // Enviar evento como string JSON
-      connection.ws.send(JSON.stringify(event));
-      logger.debug(`Evento enviado para OpenAI`, {
-        connectionId,
-        eventType: event.type,
-        eventId: event.event_id,
+      // Adicionar handler para eventos de erro no WebSocket
+      connection.ws.on("error", (error) => {
+        logger.error(`Erro no WebSocket com OpenAI: ${error.message}`, {
+          connectionId,
+          error,
+        });
       });
-
-      return event.event_id;
-    } catch (error) {
-      logger.error(`Erro ao enviar evento para OpenAI: ${error.message}`, {
-        connectionId,
-        error,
-      });
-      throw error;
     }
   }
 

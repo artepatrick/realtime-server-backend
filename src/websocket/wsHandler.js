@@ -115,8 +115,24 @@ async function handleAudioBufferAppend(sessionId, message) {
     throw new Error(`Sessão não encontrada: ${sessionId}`);
   }
 
+  logger.info(`Recebido buffer de áudio para encaminhar à OpenAI`, {
+    sessionId,
+    audioLength: message.audio ? message.audio.length : "nenhum",
+  });
+
   // Repassar o buffer para a API OpenAI
-  await sessionManager.sendToOpenAI(sessionId, message);
+  try {
+    await sessionManager.sendToOpenAI(sessionId, message);
+    logger.info(`Buffer de áudio encaminhado com sucesso à OpenAI`, {
+      sessionId,
+    });
+  } catch (error) {
+    logger.error(`Falha ao encaminhar áudio para OpenAI: ${error.message}`, {
+      sessionId,
+      error,
+    });
+    throw error;
+  }
 }
 
 /**
@@ -125,7 +141,22 @@ async function handleAudioBufferAppend(sessionId, message) {
  * @param {Object} message - Mensagem recebida
  */
 async function handleAudioBufferCommit(sessionId, message) {
-  await sessionManager.sendToOpenAI(sessionId, message);
+  logger.info(`Recebida solicitação para commit do buffer de áudio`, {
+    sessionId,
+  });
+
+  try {
+    await sessionManager.sendToOpenAI(sessionId, message);
+    logger.info(`Commit do buffer de áudio enviado com sucesso à OpenAI`, {
+      sessionId,
+    });
+  } catch (error) {
+    logger.error(`Falha no commit do buffer de áudio: ${error.message}`, {
+      sessionId,
+      error,
+    });
+    throw error;
+  }
 }
 
 /**
