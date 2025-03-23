@@ -151,7 +151,18 @@ class SessionManager {
       throw new Error(`Sessão não encontrada: ${sessionId}`);
     }
 
-    return await openaiService.sendEvent(session.openaiConnectionId, event);
+    let eventReturn = await openaiService.sendEvent(
+      session.openaiConnectionId,
+      event
+    );
+
+    logger.info(`Evento enviado para OpenAI`, {
+      sessionId,
+      eventType: event.type,
+      eventId: eventReturn,
+    });
+
+    return eventReturn;
   }
 
   /**
