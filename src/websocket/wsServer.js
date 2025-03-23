@@ -95,22 +95,8 @@ class WebSocketServer {
 
       // Configurar handlers para o cliente
       ws.on("message", (data, isBinary) => {
-        logger.info(
-          `CHegou alguma coisa! ${JSON.stringify(data).substring(0, 100)}`
-        );
         const message = isBinary ? data : data.toString();
         this.handleClientMessage(clientId, message);
-
-        // Enviar mensagem de erro e fechar conexão
-        ws.send(
-          JSON.stringify({
-            type: "message",
-            error: {
-              message: `Teste de mensagem..... opa`,
-              code: "no_code_here",
-            },
-          })
-        );
       });
 
       ws.on("close", () => this.handleClientDisconnect(clientId));
@@ -154,7 +140,7 @@ class WebSocketServer {
    */
   handleClientMessage(clientId, data) {
     try {
-      logger.debug("Mensagem recebida", { clientId, data, type: typeof data });
+      logger.debug("Mensagem recebida", { clientId, type: typeof data });
 
       const message = JSON.parse(data.toString());
       handleClientMessage(clientId, message);
